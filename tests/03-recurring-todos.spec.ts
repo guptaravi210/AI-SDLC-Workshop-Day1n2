@@ -5,7 +5,7 @@ test.describe("feature 03 - recurring todos", () => {
     await page.goto("/login");
     const username = `e2e-recurring-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     await page.getByPlaceholder("Username").fill(username);
-    await page.getByRole("button", { name: "Continue" }).click();
+    await page.getByRole("button", { name: "Continue with Passkey" }).click();
     await expect(page.getByRole("heading", { name: "Todo App" })).toBeVisible();
   });
 

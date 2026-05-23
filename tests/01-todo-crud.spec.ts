@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test("can login and perform basic todo CRUD", async ({ page }) => {
   await page.goto("/login");
   await page.getByPlaceholder("Username").fill("e2e-user");
-  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Continue with Passkey" }).click();
 
   await expect(page.getByRole("heading", { name: "Todo App" })).toBeVisible();
 
@@ -24,7 +24,7 @@ test("can login and perform basic todo CRUD", async ({ page }) => {
 test("rejects empty title and past due date", async ({ page }) => {
   await page.goto("/login");
   await page.getByPlaceholder("Username").fill("e2e-validation-user");
-  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Continue with Passkey" }).click();
 
   await page.getByPlaceholder("Add todo title").fill("   ");
   await page.getByRole("button", { name: "Add Todo" }).click();
@@ -39,7 +39,7 @@ test("rejects empty title and past due date", async ({ page }) => {
 test("rejects enabling recurring without due date", async ({ page }) => {
   await page.goto("/login");
   await page.getByPlaceholder("Username").fill("e2e-recurring-validation-user");
-  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Continue with Passkey" }).click();
   await expect(page.getByRole("heading", { name: "Todo App" })).toBeVisible();
 
   const createResult = await page.evaluate(async () => {

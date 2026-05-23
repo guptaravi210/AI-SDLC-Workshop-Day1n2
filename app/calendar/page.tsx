@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { formatSingaporeDate, getSingaporeNow, parseDateInSingapore } from "@/lib/timezone";
 
@@ -45,7 +45,7 @@ function toMonthKey(date: Date): string {
   return `${year}-${month}`;
 }
 
-export default function CalendarPage() {
+function CalendarPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const monthParam = searchParams.get("month");
@@ -189,5 +189,19 @@ export default function CalendarPage() {
         ) : null}
       </div>
     </main>
+  );
+}
+
+export default function CalendarPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-slate-100 p-6 text-slate-900">
+          <div className="mx-auto max-w-6xl rounded-xl bg-white p-4 shadow-sm">Loading calendar...</div>
+        </main>
+      }
+    >
+      <CalendarPageContent />
+    </Suspense>
   );
 }

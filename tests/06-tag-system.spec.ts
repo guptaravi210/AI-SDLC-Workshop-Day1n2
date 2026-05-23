@@ -4,15 +4,17 @@ test.describe("feature 06 - tag system", () => {
   test("creates tag and applies it to todo", async ({ page }) => {
     await page.goto("/login");
     await page.getByPlaceholder("Username").fill(`e2e-tag-${Date.now()}`);
-    await page.getByRole("button", { name: /login|register|continue/i }).first().click();
+    await page.getByRole("button", { name: "Continue with Passkey" }).click();
 
     await page.getByPlaceholder("New tag").fill("Work");
     await page.getByRole("button", { name: "+ Manage Tags" }).click();
 
     await page.getByRole("button", { name: "Work" }).first().click();
-    await page.getByPlaceholder("Add todo title").fill("Tagged Todo");
+    const title = `Tagged Todo ${Date.now()}`;
+    await page.getByPlaceholder("Add todo title").fill(title);
     await page.getByRole("button", { name: "Add Todo" }).click();
 
-    await expect(page.getByText("Work")).toBeVisible();
+    const todoRow = page.locator("li", { hasText: title }).first();
+    await expect(todoRow.getByRole("button", { name: "Work", exact: true })).toBeVisible();
   });
 });

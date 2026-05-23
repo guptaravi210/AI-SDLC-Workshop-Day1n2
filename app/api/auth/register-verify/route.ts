@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
   }
 
   const credential = verification.registrationInfo.credential;
-  const credentialId = isoBase64URL.fromBuffer(credential.id);
+  const credentialId = credential.id;
   const existing = authenticatorDB.getByCredentialId(credentialId);
 
   if (!existing) {

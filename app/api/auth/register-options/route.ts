@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     rpID: RP_ID,
     rpName: RP_NAME,
     userName: user.username,
-    userID: user.id,
+    userID: new TextEncoder().encode(user.id),
     attestationType: "none",
     authenticatorSelection: {
       residentKey: "preferred",
@@ -31,7 +31,6 @@ export async function POST(request: NextRequest) {
     },
     excludeCredentials: authenticators.map((authenticator) => ({
       id: authenticator.credential_id,
-      type: "public-key",
     })),
   });
 

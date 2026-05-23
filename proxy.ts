@@ -5,7 +5,7 @@ import { getJwtSecret } from "@/lib/jwt";
 
 const secret = getJwtSecret();
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const token = request.cookies.get("todo_session")?.value;
   const { pathname } = request.nextUrl;
 

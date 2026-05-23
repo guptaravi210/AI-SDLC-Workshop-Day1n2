@@ -26,8 +26,6 @@ export async function POST(request: NextRequest) {
     userVerification: "preferred",
     allowCredentials: authenticators.map((authenticator) => ({
       id: authenticator.credential_id,
-      type: "public-key",
-      transports: authenticator.transports ? (JSON.parse(authenticator.transports) as string[]) : [],
     })),
   });
 

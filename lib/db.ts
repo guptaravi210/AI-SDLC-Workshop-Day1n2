@@ -1,4 +1,5 @@
 import Database from "better-sqlite3";
+import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { getSingaporeNow } from "@/lib/timezone";
@@ -101,6 +102,7 @@ export interface UpdateTodoRequest {
 
 const dbRoot = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.cwd();
 const dbPath = path.join(dbRoot, "todos.db");
+mkdirSync(path.dirname(dbPath), { recursive: true });
 
 const globalForDb = globalThis as unknown as { db: Database.Database | undefined };
 const db = globalForDb.db ?? new Database(dbPath);

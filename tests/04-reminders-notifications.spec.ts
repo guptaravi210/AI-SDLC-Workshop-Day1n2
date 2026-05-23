@@ -4,7 +4,7 @@ test.describe("feature 04 - reminders and notifications", () => {
   test("creates todo with reminder badge", async ({ page }) => {
     await page.goto("/login");
     await page.getByPlaceholder("Username").fill(`e2e-rem-${Date.now()}`);
-    await page.getByRole("button", { name: /login|register|continue/i }).first().click();
+    await page.getByRole("button", { name: "Continue with Passkey" }).click();
 
     await page.getByPlaceholder("Add todo title").fill("Reminder todo");
     await page.locator("input[type='datetime-local']").fill("2026-06-01T10:00");

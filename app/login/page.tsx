@@ -29,7 +29,7 @@ export default function LoginPage() {
           throw new Error(payload?.error ?? "Could not start registration");
         }
 
-        const options = (await optionsResponse.json()) as Parameters<typeof startRegistration>[0];
+        const options = await optionsResponse.json();
         const response = await startRegistration({ optionsJSON: options });
 
         const verifyResponse = await fetch("/api/auth/register-verify", {
@@ -54,7 +54,7 @@ export default function LoginPage() {
           throw new Error(payload?.error ?? "Could not start login");
         }
 
-        const options = (await optionsResponse.json()) as Parameters<typeof startAuthentication>[0];
+        const options = await optionsResponse.json();
         const response = await startAuthentication({ optionsJSON: options });
 
         const verifyResponse = await fetch("/api/auth/login-verify", {
