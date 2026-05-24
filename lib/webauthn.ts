@@ -5,6 +5,14 @@ export const RP_ID = process.env.RP_ID || "localhost";
 export const RP_NAME = process.env.RP_NAME || "Todo App";
 export const RP_ORIGIN = process.env.RP_ORIGIN || "http://localhost:3000";
 
+function isLocalHostValue(value: string): boolean {
+  return value === "localhost" || value === "127.0.0.1";
+}
+
+function isLocalOrigin(value: string): boolean {
+  return value.includes("://localhost") || value.includes("://127.0.0.1");
+}
+
 export function resolveWebAuthnConfig(request?: NextRequest): {
   rpId: string;
   rpName: string;
@@ -12,29 +20,24 @@ export function resolveWebAuthnConfig(request?: NextRequest): {
 } {
   const rpName = process.env.RP_NAME || RP_NAME;
 
-  if (process.env.RP_ID && process.env.RP_ORIGIN) {
-    return {
-      rpId: process.env.RP_ID,
-      rpName,
-      rpOrigin: process.env.RP_ORIGIN,
-    };
-  }
+  const configuredRpId = process.env.RP_ID?.trim();
+  const configuredRpOrigin = process.env.RP_ORIGIN?.trim();
 
-  if (request) {
-    const origin = request.nextUrl.origin;
-    const host = request.nextUrl.hostname;
+  const requestHost = request?.nextUrl.hostname;
+  const requestOrigin = request?.nextUrl.origin;
 
-    return {
-      rpId: process.env.RP_ID || host,
-      rpName,
-      rpOrigin: process.env.RP_ORIGIN || origin,
-    };
-  }
+  const shouldUseConfiguredRpId =
+    !!configuredRpId && !(requestHost && !isLocalHostValue(requestHost) && isLocalHostValue(configuredRpId));
+  const shouldUseConfiguredRpOrigin =
+    !!configuredRpOrigin && !(requestOrigin && !isLocalOrigin(requestOrigin) && isLocalOrigin(configuredRpOrigin));
+
+  const rpId = shouldUseConfiguredRpId ? configuredRpId! : requestHost || RP_ID;
+  const rpOrigin = shouldUseConfiguredRpOrigin ? configuredRpOrigin! : requestOrigin || RP_ORIGIN;
 
   return {
-    rpId: RP_ID,
+    rpId,
     rpName,
-    rpOrigin: RP_ORIGIN,
+    rpOrigin,
   };
 }
 
