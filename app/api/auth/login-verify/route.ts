@@ -12,58 +12,66 @@ const schema = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  const body = await request.json().catch(() => null);
-  const parsed = schema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+  try {
+    const body = await request.json().catch(() => null);
+    const parsed = schema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+    }
+
+    const username = parsed.data.username.trim().toLowerCase();
+    const user = userDB.getByUsername(username);
+    if (!user || !user.challenge) {
+      return NextResponse.json({ error: "Login not initialized" }, { status: 400 });
+    }
+
+    const credentialId = parsed.data.response?.id;
+    if (typeof credentialId !== "string") {
+      return NextResponse.json({ error: "Invalid credential" }, { status: 400 });
+    }
+
+    const authenticator = authenticatorDB.getByCredentialId(credentialId);
+    if (!authenticator || authenticator.user_id !== user.id) {
+      return NextResponse.json({ error: "Authenticator not found" }, { status: 400 });
+    }
+
+    const { rpIds, origins } = resolveWebAuthnVerificationConfig(request);
+
+    const verification = await verifyAuthenticationResponse({
+      response: parsed.data.response,
+      expectedChallenge: user.challenge,
+      expectedOrigin: origins,
+      expectedRPID: rpIds,
+      credential: {
+        id: authenticator.credential_id,
+        publicKey: isoBase64URL.toBuffer(authenticator.credential_public_key),
+        counter: authenticator.counter ?? 0,
+      },
+    }).catch(() => null);
+
+    if (!verification?.verified) {
+      return NextResponse.json({ error: "Login verification failed" }, { status: 400 });
+    }
+
+    authenticatorDB.updateCounter(authenticator.credential_id, verification.authenticationInfo.newCounter ?? 0);
+    userDB.clearChallenge(user.id);
+
+    const token = await createSessionToken({ userId: user.id, username: user.username });
+    const response = NextResponse.json({ verified: true });
+    response.cookies.set(getSessionCookieName(), token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    });
+
+    return response;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("JWT_SECRET")) {
+      return NextResponse.json({ error: "Server misconfiguration: JWT_SECRET is missing" }, { status: 500 });
+    }
+
+    return NextResponse.json({ error: "Login failed on server" }, { status: 500 });
   }
-
-  const username = parsed.data.username.trim().toLowerCase();
-  const user = userDB.getByUsername(username);
-  if (!user || !user.challenge) {
-    return NextResponse.json({ error: "Login not initialized" }, { status: 400 });
-  }
-
-  const credentialId = parsed.data.response?.id;
-  if (typeof credentialId !== "string") {
-    return NextResponse.json({ error: "Invalid credential" }, { status: 400 });
-  }
-
-  const authenticator = authenticatorDB.getByCredentialId(credentialId);
-  if (!authenticator || authenticator.user_id !== user.id) {
-    return NextResponse.json({ error: "Authenticator not found" }, { status: 400 });
-  }
-
-  const { rpIds, origins } = resolveWebAuthnVerificationConfig(request);
-
-  const verification = await verifyAuthenticationResponse({
-    response: parsed.data.response,
-    expectedChallenge: user.challenge,
-    expectedOrigin: origins,
-    expectedRPID: rpIds,
-    credential: {
-      id: authenticator.credential_id,
-      publicKey: isoBase64URL.toBuffer(authenticator.credential_public_key),
-      counter: authenticator.counter ?? 0,
-    },
-  }).catch(() => null);
-
-  if (!verification?.verified) {
-    return NextResponse.json({ error: "Login verification failed" }, { status: 400 });
-  }
-
-  authenticatorDB.updateCounter(authenticator.credential_id, verification.authenticationInfo.newCounter ?? 0);
-  userDB.clearChallenge(user.id);
-
-  const token = await createSessionToken({ userId: user.id, username: user.username });
-  const response = NextResponse.json({ verified: true });
-  response.cookies.set(getSessionCookieName(), token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7,
-  });
-
-  return response;
 }
