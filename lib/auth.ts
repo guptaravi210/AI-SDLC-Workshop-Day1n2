@@ -4,7 +4,6 @@ import { getJwtSecret } from "@/lib/jwt";
 
 const SESSION_COOKIE = "todo_session";
 const SESSION_DAYS = 7;
-const secret = getJwtSecret();
 
 export interface Session {
   userId: string;
@@ -17,6 +16,8 @@ interface SessionPayload {
 }
 
 export async function createSessionToken(session: Session): Promise<string> {
+  const secret = getJwtSecret();
+
   return new SignJWT({ username: session.username })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(session.userId)
@@ -26,6 +27,8 @@ export async function createSessionToken(session: Session): Promise<string> {
 }
 
 export async function getSession(): Promise<Session | null> {
+  const secret = getJwtSecret();
+
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE)?.value;
 
