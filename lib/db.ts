@@ -100,9 +100,13 @@ export interface UpdateTodoRequest {
   reminder_minutes?: number | null;
 }
 
+const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
 const dbRoot = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.cwd();
-const dbPath = path.join(dbRoot, "todos.db");
-mkdirSync(path.dirname(dbPath), { recursive: true });
+const dbPath = isBuildPhase ? ":memory:" : path.join(dbRoot, "todos.db");
+
+if (!isBuildPhase) {
+  mkdirSync(path.dirname(dbPath), { recursive: true });
+}
 
 const globalForDb = globalThis as unknown as { db: Database.Database | undefined };
 const db = globalForDb.db ?? new Database(dbPath);
