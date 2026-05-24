@@ -27,14 +27,14 @@ export async function createSessionToken(session: Session): Promise<string> {
 }
 
 export async function getSession(): Promise<Session | null> {
-  const secret = getJwtSecret();
-
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE)?.value;
 
   if (!token) {
     return null;
   }
+
+  const secret = getJwtSecret();
 
   try {
     const { payload } = await jwtVerify(token, secret);
