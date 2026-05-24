@@ -13,6 +13,39 @@ function isLocalOrigin(value: string): boolean {
   return value.includes("://localhost") || value.includes("://127.0.0.1");
 }
 
+function normalizeHost(raw: string | null | undefined): string | undefined {
+  if (!raw) {
+    return undefined;
+  }
+
+  const first = raw.split(",")[0]?.trim();
+  if (!first) {
+    return undefined;
+  }
+
+  const withoutScheme = first.replace(/^https?:\/\//, "");
+
+  if (withoutScheme.startsWith("[")) {
+    const ipv6End = withoutScheme.indexOf("]");
+    return ipv6End > 0 ? withoutScheme.slice(1, ipv6End) : withoutScheme;
+  }
+
+  return withoutScheme.split(":")[0]?.trim() || undefined;
+}
+
+function normalizeProto(raw: string | null | undefined): string | undefined {
+  if (!raw) {
+    return undefined;
+  }
+
+  const first = raw.split(",")[0]?.trim().toLowerCase();
+  if (first === "http" || first === "https") {
+    return first;
+  }
+
+  return undefined;
+}
+
 export function resolveWebAuthnConfig(request?: NextRequest): {
   rpId: string;
   rpName: string;
@@ -23,8 +56,17 @@ export function resolveWebAuthnConfig(request?: NextRequest): {
   const configuredRpId = process.env.RP_ID?.trim();
   const configuredRpOrigin = process.env.RP_ORIGIN?.trim();
 
-  const requestHost = request?.nextUrl.hostname;
-  const requestOrigin = request?.nextUrl.origin;
+  const requestHost = request
+    ? normalizeHost(request.headers.get("x-forwarded-host")) ||
+      normalizeHost(request.headers.get("host")) ||
+      request.nextUrl.hostname
+    : undefined;
+
+  const requestProto = request
+    ? normalizeProto(request.headers.get("x-forwarded-proto")) || request.nextUrl.protocol.replace(":", "")
+    : undefined;
+
+  const requestOrigin = requestHost && requestProto ? `${requestProto}://${requestHost}` : undefined;
 
   const shouldUseConfiguredRpId =
     !!configuredRpId && !(requestHost && !isLocalHostValue(requestHost) && isLocalHostValue(configuredRpId));
