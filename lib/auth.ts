@@ -34,9 +34,8 @@ export async function getSession(): Promise<Session | null> {
     return null;
   }
 
-  const secret = getJwtSecret();
-
   try {
+    const secret = getJwtSecret();
     const { payload } = await jwtVerify(token, secret);
     const typed = payload as unknown as SessionPayload;
     if (!typed.sub || !typed.username) {
