@@ -3,8 +3,6 @@ import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 import { getJwtSecret } from "@/lib/jwt";
 
-const secret = getJwtSecret();
-
 export async function proxy(request: NextRequest) {
   const token = request.cookies.get("todo_session")?.value;
   const { pathname } = request.nextUrl;
@@ -18,6 +16,7 @@ export async function proxy(request: NextRequest) {
   }
 
   try {
+    const secret = getJwtSecret();
     await jwtVerify(token, secret);
     return NextResponse.next();
   } catch {
