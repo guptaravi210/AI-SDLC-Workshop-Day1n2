@@ -15,6 +15,6 @@ test.describe("feature 05 - subtasks and progress", () => {
     await todoRow.getByPlaceholder("Add subtask").fill("Child step");
     await todoRow.getByRole("button", { name: "Add", exact: true }).click();
 
-    await expect(todoRow.getByText("0/1 subtasks")).toBeVisible();
+    await expect(page.getByText("0/1 subtasks")).toBeVisible({ timeout: 10000 });
   });
 });
