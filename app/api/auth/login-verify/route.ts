@@ -4,7 +4,7 @@ import { verifyAuthenticationResponse } from "@simplewebauthn/server";
 import { isoBase64URL } from "@simplewebauthn/server/helpers";
 import { authenticatorDB, userDB } from "@/lib/db";
 import { createSessionToken, getSessionCookieName } from "@/lib/auth";
-import { resolveWebAuthnConfig } from "@/lib/webauthn";
+import { resolveWebAuthnVerificationConfig } from "@/lib/webauthn";
 
 const schema = z.object({
   username: z.string().trim().min(2).max(50),
@@ -34,13 +34,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Authenticator not found" }, { status: 400 });
   }
 
-  const { rpId, rpOrigin } = resolveWebAuthnConfig(request);
+  const { rpIds, origins } = resolveWebAuthnVerificationConfig(request);
 
   const verification = await verifyAuthenticationResponse({
     response: parsed.data.response,
     expectedChallenge: user.challenge,
-    expectedOrigin: rpOrigin,
-    expectedRPID: rpId,
+    expectedOrigin: origins,
+    expectedRPID: rpIds,
     credential: {
       id: authenticator.credential_id,
       publicKey: isoBase64URL.toBuffer(authenticator.credential_public_key),
